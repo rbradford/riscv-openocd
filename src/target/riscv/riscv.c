@@ -5262,6 +5262,26 @@ COMMAND_HANDLER(handle_riscv_virt2phys_mode)
 	return ERROR_OK;
 }
 
+COMMAND_HANDLER(riscv_set_external_trigger)
+{
+	struct target *target = get_current_target(CMD_CTX);
+	RISCV_INFO(r);
+
+	if (CMD_ARGC != 1) {
+		LOG_ERROR("Command takes exactly 1 parameter.");
+		return ERROR_COMMAND_SYNTAX_ERROR;
+	}
+	int value = atoi(CMD_ARGV[0]);
+	if (value <= 0 || value > 16) {
+		LOG_ERROR("%s is not a valid integer argument for command.", CMD_ARGV[0]);
+		return ERROR_FAIL;
+	}
+
+	r->external_trigger = value;
+
+	return ERROR_OK;
+}
+
 static const struct command_registration riscv_exec_command_handlers[] = {
 	{
 		.name = "dump_sample_buf",
@@ -5523,6 +5543,13 @@ static const struct command_registration riscv_exec_command_handlers[] = {
 		.help = "When on (default), OpenOCD will automatically execute fence instructions in some situations. "
 			"When off, users need to take care of memory coherency themselves, for example by using "
 			"`riscv exec_progbuf` to execute fence or CMO instructions."
+	},
+	{
+		.name = "set_external_trigger",
+		.handler = riscv_set_external_trigger,
+		.mode = COMMAND_CONFIG,
+		.usage = "value",
+		.help = "Add the given external trigger to the halt group"
 	},
 	COMMAND_REGISTRATION_DONE
 };

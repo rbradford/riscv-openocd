@@ -11476,6 +11476,11 @@ The second argument configures how OpenOCD should use the selected trigger featu
 With no parameters, prints current trigger features configuration.
 @end deffn
 
+@deffn {Command} {riscv set_external_trigger} value
+Associate the supplied external trigger with the halt group for the harts. When
+the external trigger fires the harts in the halt group will be halted.
+@end deffn
+
 @subsection RISC-V Authentication Commands
 
 The following commands can be used to authenticate to a RISC-V system. Eg.  a

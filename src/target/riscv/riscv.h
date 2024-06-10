@@ -191,6 +191,9 @@ struct riscv_info {
 	/* The configured approach to translate virtual addresses to physical */
 	riscv_virt2phys_mode_t virt2phys_mode;
 
+	/* Halt group may be associated with an external trigger */
+	unsigned int external_trigger;
+
 	bool triggers_enumerated;
 
 	/* Decremented every scan, and when it reaches 0 we clear the learned

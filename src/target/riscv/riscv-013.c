@@ -1703,6 +1703,32 @@ static void deinit_target(struct target *target)
 	info->version_specific = NULL;
 }
 
+static int set_external_trigger(struct target *target, unsigned int group,
+		grouptype_t grouptype, unsigned int external_trigger)
+{
+	uint32_t write_val = DM_DMCS2_HGWRITE | DM_DMCS2_HGSELECT;
+	assert(group <= 31);
+	assert(external_trigger < 16);
+	write_val = set_field(write_val, DM_DMCS2_GROUP, group);
+	write_val = set_field(write_val, DM_DMCS2_GROUPTYPE, (grouptype == HALT_GROUP) ? 0 : 1);
+	write_val = set_field(write_val, DM_DMCS2_DMEXTTRIGGER, external_trigger);
+	if (dm_write(target, DM_DMCS2, write_val) != ERROR_OK)
+		return ERROR_FAIL;
+	uint32_t read_val;
+	if (dm_read(target, &read_val, DM_DMCS2) != ERROR_OK)
+		return ERROR_FAIL;
+	if (get_field(read_val, DM_DMCS2_GROUP) == group &&
+		get_field(read_val, DM_DMCS2_DMEXTTRIGGER) == external_trigger &&
+		get_field(read_val, DM_DMCS2_HGSELECT) == 1) {
+		LOG_TARGET_INFO(target, "External trigger %d added to group %d", external_trigger,
+				group);
+	} else {
+		LOG_TARGET_ERROR(target, "External trigger %d not supported", external_trigger);
+	}
+
+	return ERROR_OK;
+}
+
 static int set_group(struct target *target, bool *supported, unsigned int group,
 		grouptype_t grouptype)
 {
@@ -2051,6 +2077,9 @@ static int examine(struct target *target)
 		else
 			LOG_TARGET_INFO(target, "Core %d could not be made part of halt group %d.",
 					info->index, target->smp);
+		if (r->external_trigger)
+			if (set_external_trigger(target, target->smp, HALT_GROUP, r->external_trigger) != ERROR_OK)
+				return ERROR_FAIL;
 	}
 
 	/* Some regression suites rely on seeing 'Examined RISC-V core' to know
